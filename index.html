@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Космический сборщик: кампания</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: #f1f5ff;
+      background: radial-gradient(ellipse at 50% 0%, #1a2c50, #080c17 70%);
+      font-family: Arial, sans-serif;
+    }
+
+    button, select, input {
+      font: inherit;
+    }
+
+    button {
+      color: #f1f5ff;
+      cursor: pointer;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 24px 16px;
+      place-items: center;
+    }
+
+    .screen.active {
+      display: grid;
+    }
+
+    .panel {
+      width: min(650px, 100%);
+      padding: 30px;
+      border: 1px solid #344563;
+      border-radius: 18px;
+      background: rgba(12, 20, 36, .96);
+      box-shadow: 0 20px 70px #0008, 0 0 30px #3478c322;
+    }
+
+    h1, h2, p {
+      margin-top: 0;
+    }
+
+    .brand {
+      margin-bottom: 12px;
+      color: #75e7ff;
+      font-size: clamp(32px, 7vw, 48px);
+      letter-spacing: 2px;
+      text-align: center;
+      text-shadow: 0 0 24px #42cfff77;
+    }
+
+    .subtitle {
+      margin-bottom: 24px;
+      color: #b7c7e2;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .menu-buttons, .button-stack {
+      display: grid;
+      gap: 11px;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 11px 15px;
+      border: 1px solid #54719e;
+      border-radius: 10px;
+      background: #172641;
+      transition: .15s;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: #77dfff;
+      background: #20375d;
+    }
+
+    .button.primary {
+      border-color: #50d6ed;
+      background: linear-gradient(120deg, #137a9d, #3456a1);
+      font-weight: bold;
+    }
+
+    .button.secondary {
+      background: transparent;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+      transform: none;
+    }
+
+    .page-title {
+      margin-bottom: 22px;
+      color: #75e7ff;
+      font-size: 30px;
+      text-align: center;
+    }
+
+    .menu-stats {
+      margin: 0 0 18px;
+      color: #bdd0ed;
+      text-align: center;
+    }
+
+    .setting, .mission-card {
+      margin: 14px 0;
+      padding: 15px;
+      border: 1px solid #293a56;
+      border-radius: 11px;
+      background: #101b2d;
+    }
+
+    .setting label, .setting-title {
+      display: block;
+      margin-bottom: 9px;
+      font-weight: bold;
+    }
+
+    .setting-note, .mission-card p {
+      margin: 7px 0 0;
+      color: #a9bad4;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #526989;
+      border-radius: 8px;
+      color: white;
+      background: #0b1423;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #54dafa;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .check-row input {
+      width: 18px;
+      height: 18px;
+      accent-color: #54dafa;
+    }
+
+    .skin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 11px;
+      margin-bottom: 18px;
+    }
+
+    .skin-card {
+      padding: 13px;
+      border: 1px solid #344563;
+      border-radius: 11px;
+      background: #101b2d;
+      text-align: center;
+    }
+
+    .skin-card.selected {
+      border: 2px solid #68e7ff;
+      box-shadow: 0 0 16px #38d7ff33;
+    }
+
+    .skin-card.locked {
+      opacity: .55;
+    }
+
+    .skin-preview {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 32px;
+      filter: drop-shadow(0 0 9px currentColor);
+    }
+
+    .skin-card small {
+      display: block;
+      margin-top: 5px;
+      color: #a9bad4;
+    }
+
+    #gameView {
+      display: none;
+      width: min(1100px, 96vw);
+      margin: 0 auto;
+      padding: 18px 0;
+    }
+
+    #gameView.active {
+      display: block;
+    }
+
+    canvas {
+      display: block;width: 100%;
+      height: auto;
+      border: 2px solid #475a80;border-radius: 12px;
+      background: #0b1220;
+      box-shadow: 0 0 35px #182c50;
+    }
+
+    .game-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 9px;
+      color: #bfcee5;
+      font-size: 14px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      place-items: center;
+      overflow-y: auto;
+      padding: 18px;
+      background: #050914cc;
+    }
+
+    .overlay.active {
+      display: grid;
+    }
+
+    .overlay-panel {
+      width: min(620px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 26px;
+      border: 1px solid #456084;
+      border-radius: 17px;
+      background: #101a2c;
+      box-shadow: 0 15px 60px #0009;
+    }
+
+    .overlay-panel h2 {
+      margin-bottom: 10px;
+      color: #75e7ff;
+      text-align: center;
+    }
+
+    .overlay-message {
+      color: #c1cfe4;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .shop-item {
+      min-height: 92px;
+      padding: 12px;
+      border: 1px solid #344563;
+      border-radius: 10px;
+      background: #142139;
+      text-align: left;
+    }
+
+    .shop-item strong, .shop-item span {
+      display: block;
+    }
+
+    .shop-item span {
+      margin-top: 6px;
+      color: #afc2df;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .shop-item:hover {
+      border-color: #75e7ff;
+    }
+
+    .shop-footer {
+      display: grid;
+      gap: 10px;
+    }
+
+    .progress-line {
+      height: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: #26344c;
+    }
+
+    .progress-line span {
+      display: block;
+      height: 100%;
+      border-radius: 5px;
+      background: #48d9ff;
+    }
+
+    @media (max-width: 560px) {
+      .panel {
+        padding: 21px;
+      }
+
+      .game-controls {
+        flex-direction: column;
+      }
+
+      .shop-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <section id="menuScreen" class="screen active">
+    <div class="panel">
+      <h1 class="brand">КОСМИЧЕСКИЙ<br>СБОРЩИК</h1>
+      <p class="subtitle">
+        Исследуй сектора, собирай обломки, улучшай корабль
+        и сразись с боссом на краю кампании.
+      </p>
+      <p id="menuStats" class="menu-stats"></p>
+
+      <div class="menu-buttons">
+        <button id="startButton" class="button primary">Продолжить кампанию</button>
+        <button id="skinsButton" class="button">Корабли и скины</button>
+        <button id="missionsButton" class="button">Задания</button>
+        <button id="settingsButton" class="button">Настройки</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="settingsScreen" class="screen">
+    <div class="panel">
+      <h2 class="page-title">Настройки</h2>
+
+      <div class="setting">
+        <label for="difficultySelect">Сложность</label>
+        <select id="difficultySelect">
+          <option value="easy">Спокойный полёт</option>
+          <option value="normal">Обычный режим</option>
+          <option value="hard">Опасный космос</option>
+        </select>
+        <p class="setting-note">На высокой сложности враги быстрее и больнее бьют.</p>
+      </div>
+
+      <div class="setting">
+        <label for="speedRange">Скорость корабля: <span id="speedValue"></span></label>
+        <input id="speedRange" type="range" min="160" max="320" step="10">
+      </div>
+
+      <div class="setting">
+        <label class="check-row" for="tipsCheckbox">
+          <input id="tipsCheckbox" type="checkbox">
+          Показывать игровые подсказки
+        </label>
+      </div>
+
+      <button id="settingsBackButton" class="button secondary">Назад</button>
+    </div>
+  </section>
+
+  <section id="skinsScreen" class="screen">
+    <div class="panel">
+      <h2 class="page-title">Корабли и скины</h2><p class="subtitle">Новые раскраски открываются за прохождение секторов и победу над боссом.</p>
+      <div id="skinGrid" class="skin-grid"></div>
+      <button id="skinsBackButton" class="button secondary">Назад</button>
+    </div>
+  </section>
+
+  <section id="missionsScreen" class="screen">
+    <div class="panel">
+      <h2 class="page-title">Задания</h2>
+      <div id="missionList"></div>
+      <button id="missionsBackButton" class="button secondary">Назад</button>
+    </div>
+  </section>
+
+  <main id="gameView">
+    <canvas id="game" width="1000" height="650"></canvas>
+    <div class="game-controls">
+      <span>Движение: WASD / стрелки · Стрелять: пробел · Ускорение: Shift</span>
+      <button id="pauseButton" class="button">Пауза (Esc)</button>
+    </div>
+  </main>
+
+  <div id="overlay" class="overlay">
+    <div class="overlay-panel">
+      <h2 id="overlayTitle"></h2>
+      <p id="overlayMessage" class="overlay-message"></p>
+      <div id="overlayContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+    const MAP_W = 2700;
+    const MAP_H = 1900;
+    const SCRAP_TARGET = 12;
+
+    const screens = {
+      menu: document.getElementById("menuScreen"),
+      settings: document.getElementById("settingsScreen"),
+      skins: document.getElementById("skinsScreen"),
+      missions: document.getElementById("missionsScreen")
+    };
+
+    const gameView = document.getElementById("gameView");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayMessage = document.getElementById("overlayMessage");
+    const overlayContent = document.getElementById("overlayContent");
+
+    const levels = [
+      {
+        name: "Сектор 1 — Обломочный пояс",
+        theme: "asteroid",
+        background: "#101b2b",
+        accent: "#7fa8c9",
+        obstacle: "#526b81",
+        decor: "#294055",
+        enemyTypes: ["scout", "scout", "shooter"],
+        enemyCount: 3,
+        boss: false,
+        description: "Покинутые астероидные шахты. Здесь охотятся разведдроны."
+      },
+      {
+        name: "Сектор 2 — Ледяные руины",
+        theme: "ice",
+        background: "#102536",
+        accent: "#6de2ff",
+        obstacle: "#78b8cf",
+        decor: "#24516a",
+        enemyTypes: ["fast", "shooter", "fast"],
+        enemyCount: 4,
+        boss: false,
+        description: "Замёрзшие тоннели и быстрые ледяные перехватчики."
+      },
+      {
+        name: "Сектор 3 — Кристальная туманность",
+        theme: "crystal",
+        background: "#211534",
+        accent: "#dc83ff",
+        obstacle: "#a45ed0",
+        decor: "#522e72",
+        enemyTypes: ["scout", "tank", "shooter"],
+        enemyCount: 4,
+        boss: true,
+        description: "Опасная туманность. За порталом ждёт страж сектора."
+      },
+      {
+        name: "Сектор 4 — Забытый флот",
+        theme: "ruins",
+        background: "#2b1d1d",
+        accent: "#ffb25d",
+        obstacle: "#98705a",
+        decor: "#593a32",
+        enemyTypes: ["fast", "tank", "shooter"],
+        enemyCount: 5,
+        boss: true,
+        description: "Поле древних кораблей и последний бой кампании."
+      }
+    ];
+
+    const skins = [
+      { id: "cyan", name: "Комета", color: "#53d9ff", glow: "#c4f8ff", unlock: "Всегда доступен" },
+      { id: "gold", name: "Золотой сокол", color: "#ffca55", glow: "#fff0b5", unlock: "Пройти сектор 1", level: 1 },
+      { id: "violet", name: "Туманность", color: "#b77bff", glow: "#e6caff", unlock: "Пройти сектор 2", level: 2 },
+      { id: "green", name: "Пионер", color: "#61efaa", glow: "#c8ffe2", unlock: "Победить босса", boss: true },
+      { id: "red", name: "Огненный след", color: "#ff6577", glow: "#ffc1c8", unlock: "Пройти сектор 3", level: 3 },{ id: "white", name: "Лунный лёд", color: "#e7efff", glow: "#ffffff", unlock: "Завершить кампанию", level: 4 }
+    ];
+
+    const defaultProfile = {
+      credits: 0,unlockedLevel: 1,
+      levelsCleared: 0,
+      bossKills: 0,
+      totalScraps: 0,
+      totalKills: 0,
+      selectedSkin: "cyan",
+      upgrades: { engine: 0, hull: 0, blaster: 0, magnet: 0 },
+      claimedMissions: []
+    };
+
+    function loadProfile() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("spaceCollectorProfile"));
+        return {
+          ...defaultProfile,
+          ...(saved || {}),
+          upgrades: { ...defaultProfile.upgrades, ...(saved?.upgrades || {}) },
+          claimedMissions: saved?.claimedMissions || []
+        };
+      } catch {
+        return structuredClone(defaultProfile);
+      }
+    }
+
+    function loadSettings() {
+      try {
+        return {
+          difficulty: "normal",
+          speed: 220,
+          tips: true,
+          ...JSON.parse(localStorage.getItem("spaceCollectorSettings") || "{}")
+        };
+      } catch {
+        return { difficulty: "normal", speed: 220, tips: true };
+      }
+    }
+
+    let profile = loadProfile();
+    let settings = loadSettings();
+    let selectedSkinId = profile.selectedSkin || "cyan";
+    let currentScreen = "menu";
+    let currentLevel = 1;
+    let player;
+    let scraps = [];
+    let enemies = [];
+    let enemyShots = [];
+    let playerShots = [];
+    let obstacles = [];
+    let decorations = [];
+    let boss = null;
+    let score = 0;
+    let lives = 3;
+    let boostEnergy = 100;
+    let invulnerability = 0;
+    let fireCooldown = 0;
+    let camera = { x: 0, y: 0 };
+    let lastTime = 0;
+    let shopReturnLevel = 1;
+    const keys = new Set();
+
+    const difficulty = {
+      easy: { enemySpeed: .78, damage: .75 },
+      normal: { enemySpeed: 1, damage: 1 },
+      hard: { enemySpeed: 1.28, damage: 1.25 }
+    };
+
+    const missions = [
+      { id: "scraps", title: "Сборщик металлолома", text: "Собери 30 обломков за все вылеты.", goal: 30, reward: 100, value: () => profile.totalScraps },
+      { id: "hunter", title: "Охотник на дронов", text: "Уничтожь 15 врагов.", goal: 15, reward: 130, value: () => profile.totalKills },
+      { id: "boss", title: "Убийца стражей", text: "Победи босса хотя бы один раз.", goal: 1, reward: 180, value: () => profile.bossKills }
+    ];
+
+    function saveProfile() {
+      localStorage.setItem("spaceCollectorProfile", JSON.stringify(profile));
+      updateMenuStats();
+    }
+
+    function saveSettings() {
+      localStorage.setItem("spaceCollectorSettings", JSON.stringify(settings));
+    }
+
+    function updateMenuStats() {
+      const nextLevel = Math.min(profile.unlockedLevel, levels.length);
+      document.getElementById("menuStats").textContent =
+        `Кредиты: ${profile.credits}  ·  Доступен: сектор ${nextLevel}  ·  Секторов пройдено: ${profile.levelsCleared}`;
+    }
+
+    function currentSkin() {
+      return skins.find(s => s.id === selectedSkinId) || skins[0];
+    }
+
+    function unlockAvailableSkins() {
+      for (const skin of skins) {
+        const unlocked = (!skin.level || profile.levelsCleared >= skin.level) &&
+          (!skin.boss || profile.bossKills > 0);
+
+        if (unlocked) skin.unlocked = true;
+      }
+    }
+
+    function showScreen(name) {
+      currentScreen = name;
+      for (const [key, element] of Object.entries(screens)) {
+        element.classList.toggle("active", key === name);
+      }
+      gameView.classList.toggle(
+        "active",
+        ["playing", "paused", "shop", "lost"].includes(name)
+      );
+      overlay.classList.toggle("active", ["paused", "shop", "lost"].includes(name));
+      if (!["paused", "shop", "lost"].includes(name)) overlayContent.replaceChildren();
+    }
+
+    function setOverlay(title, message, buttons) {
+      overlayTitle.textContent = title;
+      overlayMessage.textContent = message;
+      overlayContent.replaceChildren();
+
+      const stack = document.createElement("div");
+      stack.className = "button-stack";
+
+      for (const item of buttons) {
+        const button = document.createElement("button");button.className = "button" + (item.primary ? " primary" : "");
+        button.textContent = item.text;button.addEventListener("click", item.action);
+        stack.appendChild(button);
+      }
+
+      overlayContent.appendChild(stack);
+      overlay.classList.add("active");
+    }
+
+    function renderSkins() {
+      unlockAvailableSkins();
+      const grid = document.getElementById("skinGrid");
+      grid.replaceChildren();
+
+      for (const skin of skins) {
+        const unlocked = (!skin.level || profile.levelsCleared >= skin.level) &&
+          (!skin.boss || profile.bossKills > 0);
+
+        const card = document.createElement("button");
+        card.className = "skin-card" +
+          (skin.id === selectedSkinId ? " selected" : "") +
+          (!unlocked ? " locked" : "");
+
+        const preview = document.createElement("span");
+        preview.className = "skin-preview";
+        preview.style.color = skin.color;
+        preview.textContent = "➤";
+
+        const name = document.createElement("strong");
+        name.textContent = skin.name;
+
+        const status = document.createElement("small");
+        status.textContent = unlocked
+          ? (skin.id === selectedSkinId ? "Выбран" : "Нажми, чтобы выбрать")
+          : skin.unlock;
+
+        card.append(preview, name, status);
+
+        if (unlocked) {
+          card.addEventListener("click", () => {
+            selectedSkinId = skin.id;
+            profile.selectedSkin = skin.id;
+            saveProfile();
+            renderSkins();
+          });
+        }
+
+        grid.appendChild(card);
+      }
+    }
+
+    function renderMissions() {
+      const list = document.getElementById("missionList");
+      list.replaceChildren();
+
+      for (const mission of missions) {
+        const value = Math.min(mission.value(), mission.goal);
+        const claimed = profile.claimedMissions.includes(mission.id);
+        const card = document.createElement("div");
+        card.className = "mission-card";
+
+        const title = document.createElement("strong");
+        title.textContent = mission.title;
+
+        const text = document.createElement("p");
+        text.textContent = `${mission.text} Прогресс: ${value}/${mission.goal}. Награда: ${mission.reward} кредитов.`;
+
+        const bar = document.createElement("div");
+        bar.className = "progress-line";
+        const fill = document.createElement("span");
+        fill.style.width = `${Math.round(value / mission.goal * 100)}%`;
+        bar.appendChild(fill);
+
+        const button = document.createElement("button");
+        button.className = "button";
+        button.style.marginTop = "10px";
+        button.textContent = claimed ? "Награда получена" : "Забрать награду";
+        button.disabled = claimed || value < mission.goal;
+
+        button.addEventListener("click", () => {
+          if (claimed || value < mission.goal) return;
+          profile.claimedMissions.push(mission.id);
+          profile.credits += mission.reward;
+          saveProfile();
+          renderMissions();
+        });
+
+        card.append(title, text, bar, button);
+        list.appendChild(card);
+      }
+    }
+
+    function updateSettingsForm() {
+      document.getElementById("difficultySelect").value = settings.difficulty;
+      document.getElementById("speedRange").value = settings.speed;
+      document.getElementById("speedValue").textContent = settings.speed;
+      document.getElementById("tipsCheckbox").checked = settings.tips;
+    }
+
+    document.getElementById("startButton").addEventListener("click", () => {
+      startLevel(Math.min(profile.unlockedLevel, levels.length));
+    });
+
+    document.getElementById("skinsButton").addEventListener("click", () => {
+      renderSkins();
+      showScreen("skins");
+    });
+
+    document.getElementById("missionsButton").addEventListener("click", () => {
+      renderMissions();
+      showScreen("missions");
+    });
+
+    document.getElementById("settingsButton").addEventListener("click", () => {
+      updateSettingsForm();
+      showScreen("settings");
+    });document.getElementById("settingsBackButton").addEventListener("click", () => showScreen("menu"));document.getElementById("skinsBackButton").addEventListener("click", () => showScreen("menu"));
+    document.getElementById("missionsBackButton").addEventListener("click", () => showScreen("menu"));
+    document.getElementById("pauseButton").addEventListener("click", togglePause);
+
+    document.getElementById("difficultySelect").addEventListener("change", event => {
+      settings.difficulty = event.target.value;
+      saveSettings();
+    });
+
+    document.getElementById("speedRange").addEventListener("input", event => {
+      settings.speed = Number(event.target.value);
+      document.getElementById("speedValue").textContent = settings.speed;
+      saveSettings();
+    });
+
+    document.getElementById("tipsCheckbox").addEventListener("change", event => {
+      settings.tips = event.target.checked;
+      saveSettings();
+    });
+
+    function gameKey(event) {
+      const byCode = {
+        KeyW: "w", KeyA: "a", KeyS: "s", KeyD: "d",
+        ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+        ShiftLeft: "shift", ShiftRight: "shift", Space: "space", Escape: "escape"
+      };
+      return byCode[event.code] || event.key.toLowerCase();
+    }
+
+    window.addEventListener("keydown", event => {
+      const key = gameKey(event);
+      if (["up", "down", "left", "right", "space"].includes(key)) event.preventDefault();
+
+      if (key === "escape" && ["playing", "paused"].includes(currentScreen)) {
+        togglePause();
+        return;
+      }
+      if (currentScreen === "playing") keys.add(key);
+    });
+
+    window.addEventListener("keyup", event => keys.delete(gameKey(event)));
+    window.addEventListener("blur", () => keys.clear());
+
+    function togglePause() {
+      if (currentScreen === "playing") {
+        keys.clear();
+        showScreen("paused");
+        setOverlay("Пауза", "Полёт приостановлен.", [
+          { text: "Продолжить", primary: true, action: () => showScreen("playing") },
+          { text: "В меню", action: () => { keys.clear(); showScreen("menu"); } }
+        ]);
+      } else if (currentScreen === "paused") {
+        showScreen("playing");
+      }
+    }
+
+    function makeWorld(levelNumber) {
+      const cfg = levels[levelNumber - 1];
+      obstacles = [];
+      decorations = [];
+
+      // Отличающиеся схемы препятствий для разных секторов.
+      const placements = [];
+
+      if (levelNumber === 1) {
+        for (let x = 380; x < MAP_W - 300; x += 420) {
+          for (let y = 260; y < MAP_H - 200; y += 360) {
+            placements.push({ x: x + Math.random() * 100, y: y + Math.random() * 100 });
+          }
+        }
+      } else if (levelNumber === 2) {
+        for (let x = 350; x < MAP_W - 250; x += 310) {
+          const gap = 250 + Math.random() * 120;
+          placements.push({ x, y: 300 + Math.random() * 120 });
+          placements.push({ x: x + 90, y: 980 + Math.random() * 120 });
+          placements.push({ x: x + 30, y: 1500 + Math.random() * 90 });
+          if (gap > 320) placements.push({ x: x + 160, y: 650 + Math.random() * 100 });
+        }
+      } else if (levelNumber === 3) {
+        for (let ring = 1; ring <= 4; ring++) {
+          const radius = 190 + ring * 230;
+          for (let i = 0; i < 8; i++) {
+            const angle = i * Math.PI / 4 + ring * .21;
+            placements.push({
+              x: MAP_W / 2 + Math.cos(angle) * radius,
+              y: MAP_H / 2 + Math.sin(angle) * radius * .62
+            });
+          }
+        }
+      } else {
+        for (let x = 300; x < MAP_W - 250; x += 360) {
+          for (let y = 280; y < MAP_H - 220; y += 410) {
+            if (Math.random() > .25) {
+              placements.push({ x: x + Math.random() * 100, y: y + Math.random() * 90 });
+            }
+          }
+        }
+      }
+
+      for (const point of placements) {
+        if (Math.hypot(point.x - MAP_W / 2, point.y - MAP_H / 2) < 190) continue;
+        if (Math.hypot(point.x - (MAP_W - 150), point.y - MAP_H / 2) < 190) continue;
+        obstacles.push({x: point.x,
+          y: point.y,radius: 24 + Math.random() * (cfg.theme === "ruins" ? 28 : 35),
+          spin: Math.random() * Math.PI
+        });
+      }
+
+      const decorCount = 190;
+      for (let i = 0; i < decorCount; i++) {
+        decorations.push({
+          x: Math.random() * MAP_W,
+          y: Math.random() * MAP_H,
+          size: 5 + Math.random() * 25,
+          angle: Math.random() * Math.PI * 2,
+          type: Math.floor(Math.random() * 3)
+        });
+      }
+    }
+
+    function createScrap() {
+      for (let tries = 0; tries < 100; tries++) {
+        const x = 70 + Math.random() * (MAP_W - 140);
+        const y = 70 + Math.random() * (MAP_H - 140);
+        const nearObstacle = obstacles.some(o => Math.hypot(x - o.x, y - o.y) < o.radius + 40);
+        if (!nearObstacle && Math.hypot(x - player.x, y - player.y) > 100) {
+          scraps.push({ x, y, radius: 10, spin: Math.random() * 6 });
+          return;
+        }
+      }
+      scraps.push({ x: Math.random() * MAP_W, y: Math.random() * MAP_H, radius: 10, spin: 0 });
+    }
+
+    function enemyTypeForLevel() {
+      const types = levels[currentLevel - 1].enemyTypes;
+      return types[Math.floor(Math.random() * types.length)];
+    }
+
+    function makeEnemy(type, x, y) {
+      const settingsByType = {
+        scout: { radius: 16, hp: 2, speed: 80, color: "#ff5266", damage: 1 },
+        fast: { radius: 12, hp: 1, speed: 125, color: "#ffb343", damage: 1 },
+        tank: { radius: 23, hp: 6, speed: 42, color: "#ad68ff", damage: 1 },
+        shooter: { radius: 18, hp: 3, speed: 52, color: "#f16bcb", damage: 1 }
+      };
+      return {
+        x, y, type, ...settingsByType[type],
+        angle: 0,
+        shootTimer: 1 + Math.random() * 2,
+        hitFlash: 0
+      };
+    }
+
+    function spawnEnemy() {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 400 + Math.random() * 350;
+      const x = Math.max(40, Math.min(MAP_W - 40, player.x + Math.cos(angle) * distance));
+      const y = Math.max(40, Math.min(MAP_H - 40, player.y + Math.sin(angle) * distance));
+      enemies.push(makeEnemy(enemyTypeForLevel(), x, y));
+    }
+
+    function startLevel(levelNumber) {
+      currentLevel = Math.max(1, Math.min(levelNumber, levels.length));
+      const cfg = levels[currentLevel - 1];
+
+      player = {
+        x: MAP_W / 2,
+        y: MAP_H / 2,
+        radius: 15,
+        angle: 0
+      };
+
+      score = 0;
+      lives = 3 + profile.upgrades.hull;
+      boostEnergy = 100;
+      invulnerability = 1;
+      fireCooldown = 0;
+
+      scraps = [];
+      enemies = [];
+      enemyShots = [];
+      playerShots = [];
+      boss = cfg.boss
+        ? { x: MAP_W - 460, y: MAP_H / 2, radius: 48, hp: 120, maxHp: 120, shootTimer: 1.5, active: false }
+        : null;
+
+      makeWorld(currentLevel);
+      for (let i = 0; i < 34; i++) createScrap();
+      for (let i = 0; i < cfg.enemyCount; i++) spawnEnemy();
+
+      camera.x = 0;
+      camera.y = 0;
+      keys.clear();
+      showScreen("playing");
+    }
+
+    function movePlayer(dx, dy) {
+      player.x += dx;
+      player.y += dy;
+
+      player.x = Math.max(player.radius, Math.min(MAP_W - player.radius, player.x));
+      player.y = Math.max(player.radius, Math.min(MAP_H - player.radius, player.y));
+
+      for (const obstacle of obstacles) {
+        const vx = player.x - obstacle.x;
+        const vy = player.y - obstacle.y;
+        const distance = Math.hypot(vx, vy) || 1;
+        const minDistance = player.radius + obstacle.radius * .78;
+
+        if (distance < minDistance) {
+          player.x = obstacle.x + vx / distance * minDistance;
+          player.y = obstacle.y + vy / distance * minDistance;
+        }
+      }
+    }
+
+    function shoot() {
+      if (fireCooldown > 0) return;
+
+      let target = null;
+      let bestDistance = 900;
+
+      for (const enemy of enemies) {
+        const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+        if (distance < bestDistance) {
+          target = enemy;
+          bestDistance = distance;}
+      }
+
+      if (boss?.active && boss.hp > 0) {const distance = Math.hypot(boss.x - player.x, boss.y - player.y);
+        if (distance < bestDistance) {
+          target = boss;
+          bestDistance = distance;
+        }
+      }
+
+      if (!target) return;
+
+      const angle = Math.atan2(target.y - player.y, target.x - player.x);
+      const speed = 560;
+      playerShots.push({
+        x: player.x + Math.cos(angle) * 18,
+        y: player.y + Math.sin(angle) * 18,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.8,
+        damage: 1 + profile.upgrades.blaster
+      });
+
+      player.angle = angle;
+      fireCooldown = Math.max(.16, .42 - profile.upgrades.blaster * .035);
+    }
+
+    function damagePlayer(amount = 1) {
+      if (invulnerability > 0 || currentScreen !== "playing") return;
+      lives -= amount;
+      invulnerability = 1.5;
+      player.x = MAP_W / 2;
+      player.y = MAP_H / 2;
+
+      if (lives <= 0) {
+        showScreen("lost");
+        setOverlay("Корабль потерян", "Сектор не пройден. Улучшения и кредиты сохраняются.", [
+          { text: "Повторить сектор", primary: true, action: () => startLevel(currentLevel) },
+          { text: "В меню", action: () => showScreen("menu") }
+        ]);
+      }
+    }
+
+    function killEnemy(enemy) {
+      enemies = enemies.filter(item => item !== enemy);
+      profile.totalKills++;
+      profile.credits += enemy.type === "tank" ? 12 : 8;
+      saveProfile();
+    }
+
+    function finishLevel() {
+      if (currentScreen !== "playing") return;
+
+      profile.levelsCleared = Math.max(profile.levelsCleared, currentLevel);
+      profile.unlockedLevel = Math.max(
+        profile.unlockedLevel,
+        Math.min(levels.length, currentLevel + 1)
+      );
+      profile.credits += 100 + currentLevel * 40;
+
+      if (boss && boss.hp <= 0) profile.bossKills++;
+
+      saveProfile();
+      renderSkins();
+
+      shopReturnLevel = currentLevel;
+      openShop();
+    }
+
+    function openShop() {
+      showScreen("shop");
+      renderShop();
+    }
+
+    const upgrades = [
+      { id: "engine", name: "Двигатель", description: "+8% к скорости за уровень", max: 5 },
+      { id: "hull", name: "Бронекорпус", description: "+1 дополнительная жизнь", max: 3 },
+      { id: "blaster", name: "Усиленный бластер", description: "Выстрелы сильнее и перезарядка короче", max: 5 },
+      { id: "magnet", name: "Магнит обломков", description: "Обломки притягиваются с большего расстояния", max: 4 }
+    ];
+
+    function renderShop() {
+      overlayTitle.textContent = "Магазин улучшений";
+      overlayMessage.textContent =
+        `Кредиты: ${profile.credits}. Улучшения сохраняются между секторами.`;
+
+      overlayContent.replaceChildren();
+      const grid = document.createElement("div");
+      grid.className = "shop-grid";
+
+      for (const upgrade of upgrades) {
+        const rank = profile.upgrades[upgrade.id];
+        const cost = 100 + rank * 100;
+        const button = document.createElement("button");
+        button.className = "shop-item";
+        button.disabled = rank >= upgrade.max || profile.credits < cost;
+
+        const title = document.createElement("strong");
+        title.textContent = `${upgrade.name} · ${rank}/${upgrade.max}`;
+
+        const description = document.createElement("span");
+        description.textContent = rank >= upgrade.max
+          ? "Улучшение достигло максимального уровня."
+          : `${upgrade.description}. Цена: ${cost} кредитов.`;
+
+        button.append(title, description);
+        button.addEventListener("click", () => {
+          if (rank >= upgrade.max || profile.credits < cost) return;
+          profile.credits -= cost;
+          profile.upgrades[upgrade.id]++;
+          saveProfile();
+          renderShop();
+        });
+
+        grid.appendChild(button);
+      }
+
+      const footer = document.createElement("div");
+      footer.className = "shop-footer";
+
+      const continueButton = document.createElement("button");
+      continueButton.className = "button primary";continueButton.textContent = shopReturnLevel < levels.length? `Вылететь в сектор ${shopReturnLevel + 1}`
+        : "Завершить кампанию";
+      continueButton.addEventListener("click", () => {
+        if (shopReturnLevel < levels.length) {
+          startLevel(shopReturnLevel + 1);
+        } else {
+          setOverlay("Кампания завершена!", "Ты прошла все сектора. Можно продолжить исследование и улучшать корабль.", [
+            { text: "Начать кампанию заново", primary: true, action: () => startLevel(1) },
+            { text: "В меню", action: () => showScreen("menu") }
+          ]);
+        }
+      });
+
+      footer.appendChild(continueButton);
+      overlayContent.append(grid, footer);
+    }
+
+    function update(dt) {
+      if (currentScreen !== "playing") return;
+
+      const cfg = levels[currentLevel - 1];
+      const diff = difficulty[settings.difficulty] || difficulty.normal;
+      let dx = 0;
+      let dy = 0;
+
+      if (keys.has("w") || keys.has("up")) dy--;
+      if (keys.has("s") || keys.has("down")) dy++;
+      if (keys.has("a") || keys.has("left")) dx--;
+      if (keys.has("d") || keys.has("right")) dx++;
+
+      const length = Math.hypot(dx, dy);
+      if (length > 0) {
+        dx /= length;
+        dy /= length;
+        const boosting = keys.has("shift") && boostEnergy > 0;
+        const speed = settings.speed * (1 + profile.upgrades.engine * .08) * (boosting ? 1.65 : 1);
+        movePlayer(dx * speed * dt, dy * speed * dt);
+
+        if (boosting) boostEnergy = Math.max(0, boostEnergy - 42 * dt);
+        else boostEnergy = Math.min(100, boostEnergy + 20 * dt);
+      } else {
+        boostEnergy = Math.min(100, boostEnergy + 20 * dt);
+      }
+
+      if (keys.has("space")) shoot();
+
+      fireCooldown = Math.max(0, fireCooldown - dt);
+      invulnerability = Math.max(0, invulnerability - dt);
+
+      const magnetRange = 38 + profile.upgrades.magnet * 45;
+
+      for (let i = scraps.length - 1; i >= 0; i--) {
+        const scrap = scraps[i];
+        const vx = player.x - scrap.x;
+        const vy = player.y - scrap.y;
+        const distance = Math.hypot(vx, vy) || 1;
+
+        if (distance < magnetRange) {
+          scrap.x += vx / distance * 150 * dt;
+          scrap.y += vy / distance * 150 * dt;
+        }
+
+        if (distance < player.radius + scrap.radius + 5) {
+          scraps.splice(i, 1);
+          score++;
+          profile.totalScraps++;
+          profile.credits += 4;
+          saveProfile();
+        }
+      }
+
+      while (scraps.length < 34 && score < SCRAP_TARGET) createScrap();
+
+      const wantedEnemies = Math.min(8, cfg.enemyCount + Math.floor(score / 4));
+      while (enemies.length < wantedEnemies) spawnEnemy();
+
+      for (const enemy of [...enemies]) {
+        const vx = player.x - enemy.x;
+        const vy = player.y - enemy.y;
+        const distance = Math.hypot(vx, vy) || 1;
+        const speed = enemy.speed * diff.enemySpeed;
+
+        enemy.angle = Math.atan2(vy, vx);
+        enemy.x += vx / distance * speed * dt;
+        enemy.y += vy / distance * speed * dt;
+        enemy.shootTimer -= dt;
+
+        if (enemy.type === "shooter" && enemy.shootTimer <= 0 && distance < 720) {
+          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+          enemyShots.push({
+            x: enemy.x, y: enemy.y,
+            vx: Math.cos(angle) * 230,
+            vy: Math.sin(angle) * 230,
+            radius: 6
+          });
+          enemy.shootTimer = 2.2;
+        }
+
+        if (distance < player.radius + enemy.radius) {
+          damagePlayer(diff.damage);
+        }
+      }
+
+      for (const shot of [...playerShots]) {
+        shot.x += shot.vx * dt;
+        shot.y += shot.vy * dt;
+        shot.life -= dt;
+
+        let hit = false;
+
+        for (const enemy of [...enemies]) {
+          if (Math.hypot(shot.x - enemy.x, shot.y - enemy.y) < enemy.radius + 6) {
+            enemy.hp -= shot.damage;
+            hit = true;
+            if (enemy.hp <= 0) killEnemy(enemy);
+            break;
+          }
+        }if (!hit && boss?.active && boss.hp > 0 &&Math.hypot(shot.x - boss.x, shot.y - boss.y) < boss.radius + 8) {
+          boss.hp -= shot.damage;
+          hit = true;
+          if (boss.hp <= 0) {
+            boss.hp = 0;
+            profile.bossKills++;
+            profile.credits += 150;
+            saveProfile();
+          }
+        }
+
+        if (hit || shot.life <= 0) {
+          playerShots = playerShots.filter(item => item !== shot);
+        }
+      }
+
+      for (const shot of [...enemyShots]) {
+        shot.x += shot.vx * dt;
+        shot.y += shot.vy * dt;
+
+        if (Math.hypot(shot.x - player.x, shot.y - player.y) < player.radius + shot.radius) {
+          enemyShots = enemyShots.filter(item => item !== shot);
+          damagePlayer(diff.damage);
+        } else if (
+          shot.x < camera.x - 100 || shot.x > camera.x + WIDTH + 100 ||
+          shot.y < camera.y - 100 || shot.y > camera.y + HEIGHT + 100
+        ) {
+          enemyShots = enemyShots.filter(item => item !== shot);
+        }
+      }
+
+      if (boss && score >= SCRAP_TARGET) {
+        boss.active = true;
+        const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+        const distance = Math.hypot(player.x - boss.x, player.y - boss.y);
+
+        if (distance > 250) {
+          boss.x += Math.cos(angle) * 34 * dt;
+          boss.y += Math.sin(angle) * 34 * dt;
+        }
+
+        boss.shootTimer -= dt;
+        if (boss.shootTimer <= 0 && boss.hp > 0) {
+          const baseAngle = Math.atan2(player.y - boss.y, player.x - boss.x);
+          for (const offset of [-.22, 0, .22]) {
+            enemyShots.push({
+              x: boss.x, y: boss.y,
+              vx: Math.cos(baseAngle + offset) * 270,
+              vy: Math.sin(baseAngle + offset) * 270,
+              radius: 8
+            });
+          }
+          boss.shootTimer = 1.25;
+        }
+
+        if (distance < boss.radius + player.radius) damagePlayer(2);
+      }
+
+      const gateX = MAP_W - 120;
+      const gateY = MAP_H / 2;
+      const bossDefeated = !boss || boss.hp <= 0;
+
+      if (score >= SCRAP_TARGET && bossDefeated &&
+          Math.hypot(player.x - gateX, player.y - gateY) < 48) {
+        finishLevel();
+      }
+
+      camera.x = Math.max(0, Math.min(MAP_W - WIDTH, player.x - WIDTH / 2));
+      camera.y = Math.max(0, Math.min(MAP_H - HEIGHT, player.y - HEIGHT / 2));
+    }
+
+    function drawWorld() {
+      const cfg = levels[currentLevel - 1];
+      ctx.fillStyle = cfg.background;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+
+      // Сетка и границы помогают видеть масштаб карты.
+      ctx.strokeStyle = cfg.decor;
+      ctx.globalAlpha = .35;
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x <= MAP_W; x += 100) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, MAP_H);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y <= MAP_H; y += 100) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(MAP_W, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      for (const d of decorations) {
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.angle);
+        ctx.globalAlpha = .35;
+        ctx.fillStyle = cfg.decor;
+
+        if (cfg.theme === "ice") {
+          ctx.beginPath();
+          ctx.moveTo(0, -d.size);
+          ctx.lineTo(d.size * .65, 0);
+          ctx.lineTo(0, d.size);
+          ctx.lineTo(-d.size * .65, 0);
+          ctx.closePath();
+          ctx.fill();
+        } else if (cfg.theme === "crystal") {
+          ctx.beginPath();
+          ctx.moveTo(0, -d.size);
+          ctx.lineTo(d.size * .5, d.size);
+          ctx.lineTo(-d.size * .5, d.size);
+          ctx.closePath();
+          ctx.fill();
+        } else if (cfg.theme === "ruins") {
+          ctx.fillRect(-d.size, -d.size * .45, d.size * 2, d.size * .9);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, d.size * .45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }for (const obstacle of obstacles) {
+        ctx.save();ctx.translate(obstacle.x, obstacle.y);
+        ctx.rotate(obstacle.spin);
+        ctx.fillStyle = cfg.obstacle;
+        ctx.strokeStyle = cfg.accent;
+        ctx.lineWidth = 2;
+
+        if (cfg.theme === "ruins") {
+          ctx.fillRect(-obstacle.radius, -obstacle.radius * .65, obstacle.radius * 2, obstacle.radius * 1.3);
+          ctx.strokeRect(-obstacle.radius, -obstacle.radius * .65, obstacle.radius * 2, obstacle.radius * 1.3);
+        } else if (cfg.theme === "crystal" || cfg.theme === "ice") {
+          ctx.beginPath();
+          ctx.moveTo(0, -obstacle.radius);
+          ctx.lineTo(obstacle.radius * .7, -obstacle.radius * .1);
+          ctx.lineTo(obstacle.radius * .5, obstacle.radius);
+          ctx.lineTo(-obstacle.radius * .55, obstacle.radius * .75);
+          ctx.lineTo(-obstacle.radius * .8, -obstacle.radius * .3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, obstacle.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Портал
+      const gateX = MAP_W - 120;
+      const gateY = MAP_H / 2;
+      const gateOpen = score >= SCRAP_TARGET && (!boss || boss.hp <= 0);
+      ctx.beginPath();
+      ctx.arc(gateX, gateY, 34 + Math.sin(performance.now() / 180) * 4, 0, Math.PI * 2);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = gateOpen ? "#42f5c5" : "#63718a";
+      ctx.stroke();
+      ctx.fillStyle = gateOpen ? "#aaffeb" : "#b1bccd";
+      ctx.font = "bold 13px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(gateOpen ? "ВЫХОД" : "ЗАКРЫТ", gateX, gateY + 5);
+
+      // Обломки
+      for (const scrap of scraps) {
+        ctx.save();
+        ctx.translate(scrap.x, scrap.y);
+        ctx.rotate(scrap.spin);
+        ctx.fillStyle = "#ffc857";
+        ctx.strokeStyle = "#fff0b5";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -scrap.radius);
+        ctx.lineTo(scrap.radius, 0);
+        ctx.lineTo(0, scrap.radius);
+        ctx.lineTo(-scrap.radius, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Вражеские снаряды
+      for (const shot of enemyShots) {
+        ctx.beginPath();
+        ctx.arc(shot.x, shot.y, shot.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff7383";
+        ctx.fill();
+      }
+
+      // Выстрелы игрока
+      for (const shot of playerShots) {
+        ctx.beginPath();
+        ctx.arc(shot.x, shot.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#70efff";
+        ctx.fill();
+      }
+
+      // Враги
+      for (const enemy of enemies) {
+        ctx.save();
+        ctx.translate(enemy.x, enemy.y);
+        ctx.rotate(enemy.angle);
+        ctx.fillStyle = enemy.color;
+        ctx.strokeStyle = "#ffe2e7";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(enemy.radius * .35, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        if (enemy.hp < (enemy.type === "tank" ? 6 : enemy.type === "shooter" ? 3 : 2)) {
+          ctx.fillStyle = "#311a2a";
+          ctx.fillRect(enemy.x - 17, enemy.y - enemy.radius - 9, 34, 4);
+          ctx.fillStyle = "#ff7182";
+          ctx.fillRect(enemy.x - 17, enemy.y - enemy.radius - 9,
+            34 * Math.max(0, enemy.hp / (enemy.type === "tank" ? 6 : enemy.type === "shooter" ? 3 : 2)), 4);
+        }
+      }
+
+      // Босс появляется после сбора цели.
+      if (boss?.active && boss.hp > 0) {
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, boss.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#7b294f";
+        ctx.fill();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = cfg.accent;
+        ctx.stroke();
+
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(boss.x + 12, boss.y - 5, 8, 0, Math.PI * 2);ctx.fill();
+
+        ctx.fillStyle = "#351323";ctx.fillRect(boss.x - 55, boss.y - boss.radius - 20, 110, 9);
+        ctx.fillStyle = "#ff557e";
+        ctx.fillRect(boss.x - 55, boss.y - boss.radius - 20,
+          110 * boss.hp / boss.maxHp, 9);
+      }
+
+      // Корабль игрока
+      if (invulnerability <= 0 || Math.floor(performance.now() / 100) % 2 === 0) {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.rotate(player.angle || 0);
+
+        if (keys.has("shift") && boostEnergy > 0) {
+          ctx.fillStyle = "#ff9f43";
+          ctx.beginPath();
+          ctx.moveTo(-10, -6);
+          ctx.lineTo(-30 - Math.random() * 8, 0);
+          ctx.lineTo(-10, 6);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = currentSkin().color;
+        ctx.strokeStyle = currentSkin().glow;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(21, 0);
+        ctx.lineTo(-12, -12);
+        ctx.lineTo(-7, 0);
+        ctx.lineTo(-12, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // HUD
+      ctx.fillStyle = "rgba(5, 10, 20, .82)";
+      ctx.fillRect(12, 12, 370, settings.tips ? 147 : 132);
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 20px Arial";
+      ctx.fillText(levels[currentLevel - 1].name, 24, 39);
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#ffdc82";
+      ctx.fillText(`Обломки: ${score}/${SCRAP_TARGET}`, 24, 67);
+      ctx.fillStyle = "#ff8190";
+      ctx.fillText(`Жизни: ${"♥ ".repeat(Math.max(0, lives))}`, 24, 94);
+      ctx.fillStyle = "#c6d7f2";
+      ctx.font = "13px Arial";
+      ctx.fillText("Ускорение", 24, 122);
+      ctx.fillStyle = "#26344c";
+      ctx.fillRect(102, 111, 220, 13);
+      ctx.fillStyle = "#48d9ff";
+      ctx.fillRect(102, 111, 220 * boostEnergy / 100, 13);
+
+      if (settings.tips) {
+        ctx.fillStyle = "#b2c4df";
+        ctx.font = "12px Arial";
+        ctx.fillText(levels[currentLevel - 1].description, 24, 146);
+      }
+
+      const mapX = 790;
+      const mapY = 15;
+      const mapW = 195;
+      const mapH = 125;
+      ctx.fillStyle = "rgba(5, 10, 20, .78)";
+      ctx.fillRect(mapX, mapY, mapW, mapH);
+      ctx.strokeStyle = "#8292ad";
+      ctx.strokeRect(mapX, mapY, mapW, mapH);
+
+      ctx.fillStyle = "#53d9ff";
+      ctx.beginPath();
+      ctx.arc(mapX + player.x / MAP_W * mapW, mapY + player.y / MAP_H * mapH, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#42f5c5";
+      ctx.fillRect(mapX + (MAP_W - 120) / MAP_W * mapW - 2, mapY + MAP_H / 2 / MAP_H * mapH - 2, 5, 5);
+
+      if (boss?.active && boss.hp > 0) {
+        ctx.fillStyle = "#ff6485";
+        ctx.beginPath();
+        ctx.arc(mapX + boss.x / MAP_W * mapW, mapY + boss.y / MAP_H * mapH, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function loop(time) {
+      const dt = lastTime ? Math.min((time - lastTime) / 1000, .05) : 0;
+      lastTime = time;
+
+      if (player && currentLevel > 0) {
+        update(dt);
+        drawWorld();
+      } else {
+        ctx.fillStyle = "#0b1220";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    updateMenuStats();
+    updateSettingsForm();
+    renderSkins();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
